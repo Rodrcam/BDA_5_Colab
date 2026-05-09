@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Nueva asignatura{% endblock %}
+
+{% block content %}
+<h1>Nueva asignatura</h1>
+<div class="form-card">
+  <form method="post">
+    <div class="form-group">
+      <label for="nombre">Nombre principal (es el que se indexa con tsvector)</label>
+      <input type="text" id="nombre" name="nombre" required />
+    </div>
+
+    <fieldset class="fieldset">
+      <legend>Nombres multilingues (nombre_i18n)</legend>
+      <div class="form-group">
+        <label for="nombre_es">Español (es)</label>
+        <input type="text" id="nombre_es" name="nombre_es" placeholder="Nombre en español" />
+      </div>
+      <div class="form-group">
+        <label for="nombre_en">Inglés (en)</label>
+        <input type="text" id="nombre_en" name="nombre_en" placeholder="English name" />
+      </div>
+      <div class="form-group">
+        <label for="nombre_ca">Catalán (ca)</label>
+        <input type="text" id="nombre_ca" name="nombre_ca" placeholder="Nom en català" />
+      </div>
+    </fieldset>
+
+    <div class="form-group">
+      <label for="profesor_id">Profesor (opcional)</label>
+      <select id="profesor_id" name="profesor_id">
+        <option value="">— Sin asignar —</option>
+        {% for p in profesores %}
+        <option value="{{ p[0] }}">{{ p[1] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('asignaturas.index') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

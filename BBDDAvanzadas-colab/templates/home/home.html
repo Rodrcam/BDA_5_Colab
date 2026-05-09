@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Inicio — GestorClases{% endblock %}
+
+{% block content %}
+<h1>Bienvenido al Gestor de Clases</h1>
+
+<section class="cards-row">
+  {% for label, key in [("Alumnos","alumnos"),("Profesores","profesores"),("Cursos","cursos"),("Matrículas","matriculas")] %}
+  <div class="card">
+    <h2>{{ counts.get(key, 0) }}</h2>
+    <p>{{ label }}</p>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="info-block">
+  <h3>Versión de PostgreSQL</h3>
+  <pre>{{ version }}</pre>
+</section>
+
+<section class="info-block">
+  <h3>Extensiones activas (tema12)</h3>
+  <ul>
+    <li><strong>unaccent</strong> — búsqueda sin acento</li>
+    <li><strong>citext</strong> — comparación de texto sin distinción de mayúsculas</li>
+    <li><strong>fuzzystrmatch</strong> — distancia de Levenshtein</li>
+    <li><strong>btree_gin</strong> — índices GIN para tipos btree</li>
+    <li><strong>pg_trgm</strong> — similaridad por trigramas</li>
+  </ul>
+</section>
+{% endblock %}
