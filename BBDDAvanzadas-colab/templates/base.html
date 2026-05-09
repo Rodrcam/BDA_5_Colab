@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Gestor de Clases{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+</head>
+<body>
+  <nav class="navbar">
+    <a class="nav-brand" href="{{ url_for('home.home') }}">GestorClases</a>
+    <ul class="nav-links">
+      <li><a href="{{ url_for('alumnos.index') }}">Alumnos</a></li>
+      <li><a href="{{ url_for('profesores.index') }}">Profesores</a></li>
+      <li><a href="{{ url_for('asignaturas.index') }}">Asignaturas</a></li>
+      <li><a href="{{ url_for('matriculas.index') }}">Matrículas</a></li>
+      <li><a href="{{ url_for('transacciones.index') }}">Transacciones</a></li>
+      <li><a href="{{ url_for('auditoria.index') }}">Auditoría</a></li>
+      <li><a href="{{ url_for('vista.index') }}">Vista global</a></li>
+      {% if session.get('user') %}
+        <li><span class="nav-user">{{ session.user.username }}</span></li>
+        <li><a href="{{ url_for('auth.logout') }}">Salir</a></li>
+      {% else %}
+        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p>BDA Practica 3 &mdash; PostgreSQL + Flask</p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Alumnos{% endblock %}
+
+{% block content %}
+<h1>Alumnos</h1>
+<a href="{{ url_for('alumnos.nuevo') }}" class="btn btn-primary">+ Nuevo alumno</a>
+
+<form class="search-form" method="get" action="{{ url_for('alumnos.buscar') }}">
+  <input type="text" name="q" value="{{ search_term|default('') }}" placeholder="Buscar alumno..." />
+  <select name="mode">
+    <option value="unaccent" {% if search_mode == 'unaccent' %}selected{% endif %}>Sin acento (unaccent)</option>
+    <option value="jsonb_key" {% if search_mode == 'jsonb_key' %}selected{% endif %}>Clave JSONB extras</option>
+  </select>
+  <button type="submit" class="btn">Buscar</button>
+  <a href="{{ url_for('alumnos.index') }}" class="btn btn-secondary">Limpiar</a>
+</form>
+
+{% if search_term %}
+  <p class="search-info">Resultados para <strong>"{{ search_term }}"</strong> (modo: {{ search_mode }}): {{ alumnos|length }}</p>
+{% endif %}
+
+<table class="data-table">
+  <thead>
+    <tr><th>ID</th><th>Nombre</th><th>Email</th></tr>
+  </thead>
+  <tbody>
+    {% for a in alumnos %}
+    <tr>
+      <td class="uuid">{{ a[0] }}</td>
+      <td>{{ a[1] }}</td>
+      <td>{{ a[2] }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="empty">No hay alumnos.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

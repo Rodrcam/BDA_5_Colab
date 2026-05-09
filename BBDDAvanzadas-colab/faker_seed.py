@@ -10,14 +10,29 @@ from models import (
 
 fake = Faker("es_ES")
 
-NOMBRES_CURSOS = [
-    "Matemáticas I", "Matemáticas II", "Álgebra Lineal",
-    "Cálculo Diferencial", "Cálculo Integral", "Estadística",
-    "Programación I", "Programación II", "Bases de Datos",
-    "Redes de Computadores", "Sistemas Operativos", "Inteligencia Artificial",
-    "Física I", "Física II", "Química General",
-    "Historia Universal", "Filosofía", "Inglés Técnico",
-]
+# Multilingual translations for seed data stored in nombre_i18n JSONB column
+_I18N_MAP: dict[str, dict[str, str]] = {
+    "Matemáticas I":           {"es": "Matemáticas I",           "en": "Mathematics I",           "ca": "Matemàtiques I"},
+    "Matemáticas II":          {"es": "Matemáticas II",          "en": "Mathematics II",          "ca": "Matemàtiques II"},
+    "Álgebra Lineal":          {"es": "Álgebra Lineal",          "en": "Linear Algebra",          "ca": "Àlgebra Lineal"},
+    "Cálculo Diferencial":     {"es": "Cálculo Diferencial",     "en": "Differential Calculus",   "ca": "Càlcul Diferencial"},
+    "Cálculo Integral":        {"es": "Cálculo Integral",        "en": "Integral Calculus",       "ca": "Càlcul Integral"},
+    "Estadística":             {"es": "Estadística",             "en": "Statistics",              "ca": "Estadística"},
+    "Programación I":          {"es": "Programación I",          "en": "Programming I",           "ca": "Programació I"},
+    "Programación II":         {"es": "Programación II",         "en": "Programming II",          "ca": "Programació II"},
+    "Bases de Datos":          {"es": "Bases de Datos",          "en": "Databases",               "ca": "Bases de Dades"},
+    "Redes de Computadores":   {"es": "Redes de Computadores",   "en": "Computer Networks",       "ca": "Xarxes de Computadors"},
+    "Sistemas Operativos":     {"es": "Sistemas Operativos",     "en": "Operating Systems",       "ca": "Sistemes Operatius"},
+    "Inteligencia Artificial": {"es": "Inteligencia Artificial", "en": "Artificial Intelligence", "ca": "Intel·ligència Artificial"},
+    "Física I":                {"es": "Física I",                "en": "Physics I",               "ca": "Física I"},
+    "Física II":               {"es": "Física II",               "en": "Physics II",              "ca": "Física II"},
+    "Química General":         {"es": "Química General",         "en": "General Chemistry",       "ca": "Química General"},
+    "Historia Universal":      {"es": "Historia Universal",      "en": "World History",           "ca": "Història Universal"},
+    "Filosofía":               {"es": "Filosofía",               "en": "Philosophy",              "ca": "Filosofia"},
+    "Inglés Técnico":          {"es": "Inglés Técnico",          "en": "Technical English",       "ca": "Anglès Tècnic"},
+}
+
+NOMBRES_CURSOS = list(_I18N_MAP.keys())
 
 
 def _gen_alumnos(n: int) -> list[Alumnos]:
@@ -49,14 +64,17 @@ def _gen_cursos(profesores: list[Profesores], n: int) -> list[Cursos]:
     if n > len(nombres):
         extras = [f"Taller {fake.word().capitalize()}" for _ in range(n - len(nombres))]
         nombres.extend(extras)
-    return [
-        Cursos(
+    cursos = []
+    for i in range(n):
+        nombre = nombres[i]
+        nombre_i18n = _I18N_MAP.get(nombre, {"es": nombre})
+        cursos.append(Cursos(
             id=str(uuid.uuid4()),
-            nombre=nombres[i],
+            nombre=nombre,
             profesor_id=random.choice(profesores).id,
-        )
-        for i in range(n)
-    ]
+            nombre_i18n=nombre_i18n,
+        ))
+    return cursos
 
 
 def _gen_matriculas(

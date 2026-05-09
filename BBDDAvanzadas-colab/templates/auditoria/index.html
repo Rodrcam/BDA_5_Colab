@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Auditoría{% endblock %}
+
+{% block content %}
+<h1>Auditoría de la base de datos</h1>
+
+<section class="info-block">
+  <h2>Versión de PostgreSQL</h2>
+  <pre>{{ version }}</pre>
+</section>
+
+<section class="info-block">
+  <h2>Recuentos</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>Entidad</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      {% for key, label in [('alumnos','Alumnos'),('profesores','Profesores'),('cursos','Cursos'),('matriculas','Matrículas')] %}
+      <tr>
+        <td>{{ label }}</td>
+        <td>{{ counts.get(key, 0) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="info-block">
+  <h2>Extensiones PostgreSQL activas (tema12)</h2>
+  <table class="data-table">
+    <thead>
+      <tr><th>Extensión</th><th>Uso en la aplicación</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>unaccent</td><td>Búsqueda de alumnos sin distinción de acentos</td></tr>
+      <tr><td>citext</td><td>Columna email en alumnos: comparación case-insensitive automática</td></tr>
+      <tr><td>fuzzystrmatch</td><td>Búsqueda de cursos por distancia de Levenshtein</td></tr>
+      <tr><td>btree_gin</td><td>Índices GIN sobre columnas escalares (nombre)</td></tr>
+      <tr><td>pg_trgm</td><td>Búsqueda por similaridad de trigramas en cursos y alumnos</td></tr>
+    </tbody>
+  </table>
+</section>
+{% endblock %}

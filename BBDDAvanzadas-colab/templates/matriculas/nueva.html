@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Nueva matrícula{% endblock %}
+
+{% block content %}
+<h1>Nueva matrícula</h1>
+<div class="form-card">
+  <form method="post">
+    <div class="form-group">
+      <label for="alumno_id">Alumno</label>
+      <select id="alumno_id" name="alumno_id" required>
+        <option value="">— Seleccione alumno —</option>
+        {% for a in alumnos %}
+        <option value="{{ a[0] }}">{{ a[1] }} &lt;{{ a[2] }}&gt;</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="curso_id">Asignatura</label>
+      <select id="curso_id" name="curso_id" required>
+        <option value="">— Seleccione asignatura —</option>
+        {% for c in cursos %}
+        <option value="{{ c[0] }}">{{ c[1] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{{ url_for('matriculas.index') }}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}
