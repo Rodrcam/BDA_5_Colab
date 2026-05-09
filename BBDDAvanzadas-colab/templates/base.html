@@ -17,6 +17,7 @@
       <li><a href="{{ url_for('transacciones.index') }}">Transacciones</a></li>
       <li><a href="{{ url_for('auditoria.index') }}">Auditoría</a></li>
       <li><a href="{{ url_for('vista.index') }}">Vista global</a></li>
+      <li><a href="{{ url_for('consultas_avanzadas.index') }}">Consultas avanzadas</a></li>
       {% if session.get('user') %}
         <li><span class="nav-user">{{ session.user.username }}</span></li>
         <li><a href="{{ url_for('auth.logout') }}">Salir</a></li>

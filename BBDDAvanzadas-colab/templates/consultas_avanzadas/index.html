@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Consultas Avanzadas — Tema 13{% endblock %}
+
+{% block content %}
+<style>
+  .query-block { margin-bottom: 3rem; }
+  .query-block h2 { border-bottom: 2px solid #3b6fcc; padding-bottom: .4rem; color: #1a3a6e; }
+  .query-block .sql-box {
+    background: #1e1e2e; color: #cdd6f4; font-family: monospace;
+    font-size: .85rem; padding: 1rem 1.2rem; border-radius: 6px;
+    margin: .8rem 0 1rem; white-space: pre-wrap; overflow-x: auto;
+  }
+  .keyword { color: #89b4fa; font-weight: bold; }
+  .highlight-row td { background: #fff3cd; font-weight: bold; }
+  .total-row  td { background: #d1e7dd; font-weight: bold; }
+  .subtotal-row td { background: #e8f4fd; font-style: italic; }
+  .badge {
+    display: inline-block; padding: .15rem .5rem; border-radius: 12px;
+    font-size: .75rem; font-weight: bold; color: #fff;
+  }
+  .badge-1 { background: #ffc107; color: #333; }
+  .badge-2 { background: #adb5bd; }
+  .badge-3 { background: #cd7f32; }
+  .empty-msg { color: #888; font-style: italic; }
+</style>
+
+<h1>Consultas Avanzadas — Tema 13</h1>
+<p>Cuatro consultas SQL avanzadas aplicadas sobre los datos del sistema: <strong>ROW_NUMBER</strong>, <strong>GROUPING SETS</strong>, <strong>ROLLUP</strong> y <strong>FILTER</strong>.</p>
+
+{% if error %}
+<div class="alert alert-danger">
+  <strong>Error al ejecutar las consultas:</strong> {{ error }}<br>
+  <small>Comprueba que la base de datos está disponible y tiene datos.</small>
+</div>
+{% endif %}
+
+<!-- ================================================================ -->
+<!-- 1. ROW_NUMBER -->
+<!-- ================================================================ -->
+<section class="query-block">
+  <h2>1. ROW_NUMBER — Top 3 cursos con más matrículas por mes</h2>
+  <p>
+    Usa <code>ROW_NUMBER() OVER (PARTITION BY mes ORDER BY total DESC)</code> para
+    numerar, dentro de cada mes, los cursos de mayor a menor número de matrículas.
+    La capa exterior filtra los tres primeros de cada mes.
+  </p>
+  <div class="sql-box"><span class="keyword">WITH</span> base AS (
+    <span class="keyword">SELECT</span>
+        date_trunc(<span style="color:#a6e3a1">'month'</span>, m.created_at) AS mes,
+        c.nombre                           AS curso,
+        COUNT(*)                           AS total_matriculas
+    <span class="keyword">FROM</span> matriculas m
+    <span class="keyword">JOIN</span> cursos c ON m.curso_id = c.id
+    <span class="keyword">GROUP BY</span> 1, 2
+)
+<span class="keyword">SELECT</span> mes, curso, total_matriculas, puesto
+<span class="keyword">FROM</span> (
+    <span class="keyword">SELECT</span> *,
+           <span class="keyword">row_number</span>() <span class="keyword">OVER</span> (<span class="keyword">PARTITION BY</span> mes <span class="keyword">ORDER BY</span> total_matriculas <span class="keyword">DESC</span>) AS puesto
+    <span class="keyword">FROM</span> base
+) ranked
+<span class="keyword">WHERE</span> puesto &lt;= 3
+<span class="keyword">ORDER BY</span> mes, puesto;</div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Mes</th>
+        <th>Curso</th>
+        <th>Matrículas</th>
+        <th>Puesto</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in row_number_rows %}
+      <tr>
+        <td>{{ row[0].strftime('%Y-%m') if row[0] else '—' }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+        <td>
+          {% if row[3] == 1 %}
+            <span class="badge badge-1">🥇 1º</span>
+          {% elif row[3] == 2 %}
+            <span class="badge badge-2">🥈 2º</span>
+          {% else %}
+            <span class="badge badge-3">🥉 3º</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty-msg">Sin datos. Añade matrículas para ver resultados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<!-- 2. GROUPING SETS -->
+<!-- ================================================================ -->
+<section class="query-block">
+  <h2>2. GROUPING SETS — Matrículas por (mes, curso), por mes y total global</h2>
+  <p>
+    <code>GROUPING SETS</code> produce en una sola consulta tres niveles de agregación:
+    el detalle por <em>(mes, curso)</em>, el subtotal por <em>mes</em> y el total global.
+    Las filas con <code>NULL</code> en alguna columna son filas de resumen, no datos faltantes.
+  </p>
+  <div class="sql-box"><span class="keyword">SELECT</span>
+    date_trunc(<span style="color:#a6e3a1">'month'</span>, m.created_at) AS mes,
+    c.nombre                           AS curso,
+    COUNT(*)                           AS total
+<span class="keyword">FROM</span> matriculas m
+<span class="keyword">JOIN</span> cursos c ON m.curso_id = c.id
+<span class="keyword">GROUP BY GROUPING SETS</span> (
+    (date_trunc(<span style="color:#a6e3a1">'month'</span>, m.created_at), c.nombre),
+    (date_trunc(<span style="color:#a6e3a1">'month'</span>, m.created_at)),
+    ()
+)
+<span class="keyword">ORDER BY</span> mes <span class="keyword">NULLS LAST</span>, curso <span class="keyword">NULLS LAST</span>;</div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Mes</th><th>Curso</th><th>Total matrículas</th><th>Nivel</th></tr>
+    </thead>
+    <tbody>
+      {% for row in grouping_sets_rows %}
+        {% if row[0] is none and row[1] is none %}
+          <tr class="total-row">
+            <td>—</td><td>—</td><td>{{ row[2] }}</td><td>TOTAL GLOBAL</td>
+          </tr>
+        {% elif row[1] is none %}
+          <tr class="subtotal-row">
+            <td>{{ row[0].strftime('%Y-%m') if row[0] else '—' }}</td>
+            <td>—</td><td>{{ row[2] }}</td><td>Subtotal mes</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td>{{ row[0].strftime('%Y-%m') if row[0] else '—' }}</td>
+            <td>{{ row[1] }}</td><td>{{ row[2] }}</td><td>Detalle</td>
+          </tr>
+        {% endif %}
+      {% else %}
+      <tr><td colspan="4" class="empty-msg">Sin datos. Añade matrículas para ver resultados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<!-- 3. ROLLUP -->
+<!-- ================================================================ -->
+<section class="query-block">
+  <h2>3. ROLLUP — Matrículas por mes y alumno con subtotales</h2>
+  <p>
+    <code>ROLLUP(mes, alumno)</code> genera automáticamente la escalera de resúmenes:
+    detalle por <em>(mes, alumno)</em>, subtotal por <em>mes</em> y total global del curso.
+    Con <code>NULLS LAST</code> en el <code>ORDER BY</code>, las filas de resumen van al final de cada grupo.
+  </p>
+  <div class="sql-box"><span class="keyword">SELECT</span>
+    date_trunc(<span style="color:#a6e3a1">'month'</span>, m.created_at) AS mes,
+    a.nombre                           AS alumno,
+    COUNT(*)                           AS total
+<span class="keyword">FROM</span> matriculas m
+<span class="keyword">JOIN</span> alumnos a ON m.alumno_id = a.id
+<span class="keyword">GROUP BY ROLLUP</span> (date_trunc(<span style="color:#a6e3a1">'month'</span>, m.created_at), a.nombre)
+<span class="keyword">ORDER BY</span> mes <span class="keyword">NULLS LAST</span>, alumno <span class="keyword">NULLS LAST</span>;</div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Mes</th><th>Alumno</th><th>Total matrículas</th><th>Nivel</th></tr>
+    </thead>
+    <tbody>
+      {% for row in rollup_rows %}
+        {% if row[0] is none and row[1] is none %}
+          <tr class="total-row">
+            <td>—</td><td>—</td><td>{{ row[2] }}</td><td>TOTAL GLOBAL</td>
+          </tr>
+        {% elif row[1] is none %}
+          <tr class="subtotal-row">
+            <td>{{ row[0].strftime('%Y-%m') if row[0] else '—' }}</td>
+            <td>—</td><td>{{ row[2] }}</td><td>Subtotal mes</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td>{{ row[0].strftime('%Y-%m') if row[0] else '—' }}</td>
+            <td>{{ row[1] }}</td><td>{{ row[2] }}</td><td>Detalle</td>
+          </tr>
+        {% endif %}
+      {% else %}
+      <tr><td colspan="4" class="empty-msg">Sin datos. Añade matrículas para ver resultados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<!-- 4. FILTER -->
+<!-- ================================================================ -->
+<section class="query-block">
+  <h2>4. FILTER — Matrículas por alumno: 1er semestre vs 2º semestre</h2>
+  <p>
+    La cláusula <code>FILTER (WHERE ...)</code> aplica una condición directamente sobre el
+    agregado, sin necesidad de un <code>CASE</code> dentro del <code>COUNT</code>.
+    Cada columna cuenta solo las matrículas del semestre indicado.
+  </p>
+  <div class="sql-box"><span class="keyword">SELECT</span>
+    a.nombre AS alumno,
+    COUNT(*) <span class="keyword">FILTER</span> (<span class="keyword">WHERE</span> EXTRACT(month <span class="keyword">FROM</span> m.created_at) <span class="keyword">BETWEEN</span> 1 <span class="keyword">AND</span> 6)  AS primer_semestre,
+    COUNT(*) <span class="keyword">FILTER</span> (<span class="keyword">WHERE</span> EXTRACT(month <span class="keyword">FROM</span> m.created_at) <span class="keyword">BETWEEN</span> 7 <span class="keyword">AND</span> 12) AS segundo_semestre,
+    COUNT(*)                                                                    AS total
+<span class="keyword">FROM</span> matriculas m
+<span class="keyword">JOIN</span> alumnos a ON m.alumno_id = a.id
+<span class="keyword">GROUP BY</span> a.nombre
+<span class="keyword">ORDER BY</span> total <span class="keyword">DESC</span>, a.nombre;</div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Alumno</th>
+        <th>1er semestre (ene–jun)</th>
+        <th>2º semestre (jul–dic)</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in filter_rows %}
+      <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+        <td><strong>{{ row[3] }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="empty-msg">Sin datos. Añade matrículas para ver resultados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

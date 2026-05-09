@@ -4,6 +4,7 @@ from models.db.psql import (
     OperacionesProfesor,
     OperacionesCurso,
     OperacionesMatricula,
+    OperacionesConsultasAvanzadas,
 )
 from models.db.sqlite import SQLiteAuth
 
@@ -13,5 +14,6 @@ __all__ = [
     "OperacionesProfesor",
     "OperacionesCurso",
     "OperacionesMatricula",
+    "OperacionesConsultasAvanzadas",
     "SQLiteAuth",
 ]

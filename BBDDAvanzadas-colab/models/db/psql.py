@@ -172,3 +172,30 @@ class OperacionesMatricula:
         """Filter matriculas by JSONB containment (@>). Pass a JSON string."""
         cursor.execute(Q.SQL_SEARCH_MATRICULAS_JSONB, (json_filter,))
         return cursor.fetchall()
+
+
+# ---------------------------------------------------------------------------
+# Consultas avanzadas — tema13
+# ---------------------------------------------------------------------------
+
+class OperacionesConsultasAvanzadas:
+
+    @with_cursor
+    def row_number_top_cursos(self, *, cursor) -> list[tuple]:
+        cursor.execute(Q.SQL_ROW_NUMBER_TOP_CURSOS_POR_MES)
+        return cursor.fetchall()
+
+    @with_cursor
+    def grouping_sets_matriculas(self, *, cursor) -> list[tuple]:
+        cursor.execute(Q.SQL_GROUPING_SETS_MATRICULAS)
+        return cursor.fetchall()
+
+    @with_cursor
+    def rollup_matriculas(self, *, cursor) -> list[tuple]:
+        cursor.execute(Q.SQL_ROLLUP_MATRICULAS)
+        return cursor.fetchall()
+
+    @with_cursor
+    def filter_semestres(self, *, cursor) -> list[tuple]:
+        cursor.execute(Q.SQL_FILTER_SEMESTRES)
+        return cursor.fetchall()

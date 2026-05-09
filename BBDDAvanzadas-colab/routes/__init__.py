@@ -11,6 +11,7 @@ from routes.matriculas import matriculas_bp
 from routes.profesores import profesores_bp
 from routes.transacciones import transacciones_bp
 from routes.vista import vista_bp
+from routes.consultas_avanzadas import consultas_bp
 
 __all__ = [
     "alumnos_bp",
@@ -22,4 +23,5 @@ __all__ = [
     "profesores_bp",
     "transacciones_bp",
     "vista_bp",
+    "consultas_bp",
 ]

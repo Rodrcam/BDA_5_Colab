@@ -225,3 +225,69 @@ SQL_GET_COUNTS = (
     "  (SELECT COUNT(*) FROM cursos)     AS cursos,"
     "  (SELECT COUNT(*) FROM matriculas) AS matriculas"
 )
+
+# ---------------------------------------------------------------------------
+# Consultas avanzadas — tema13
+# ---------------------------------------------------------------------------
+
+# ROW_NUMBER — Top 3 cursos con más matrículas por mes
+SQL_ROW_NUMBER_TOP_CURSOS_POR_MES = """
+WITH base AS (
+    SELECT
+        date_trunc('month', m.created_at) AS mes,
+        c.nombre                           AS curso,
+        COUNT(*)                           AS total_matriculas
+    FROM matriculas m
+    JOIN cursos c ON m.curso_id = c.id
+    GROUP BY 1, 2
+)
+SELECT mes, curso, total_matriculas, puesto
+FROM (
+    SELECT *,
+           row_number() OVER (PARTITION BY mes ORDER BY total_matriculas DESC) AS puesto
+    FROM base
+) ranked
+WHERE puesto <= 3
+ORDER BY mes, puesto;
+"""
+
+# GROUPING SETS — Matrículas por (mes, curso), por mes y total global
+SQL_GROUPING_SETS_MATRICULAS = """
+SELECT
+    date_trunc('month', m.created_at) AS mes,
+    c.nombre                           AS curso,
+    COUNT(*)                           AS total
+FROM matriculas m
+JOIN cursos c ON m.curso_id = c.id
+GROUP BY GROUPING SETS (
+    (date_trunc('month', m.created_at), c.nombre),
+    (date_trunc('month', m.created_at)),
+    ()
+)
+ORDER BY mes NULLS LAST, curso NULLS LAST;
+"""
+
+# ROLLUP — Matrículas por mes y alumno con subtotales por mes y total global
+SQL_ROLLUP_MATRICULAS = """
+SELECT
+    date_trunc('month', m.created_at) AS mes,
+    a.nombre                           AS alumno,
+    COUNT(*)                           AS total
+FROM matriculas m
+JOIN alumnos a ON m.alumno_id = a.id
+GROUP BY ROLLUP (date_trunc('month', m.created_at), a.nombre)
+ORDER BY mes NULLS LAST, alumno NULLS LAST;
+"""
+
+# FILTER — Matrículas del 1er semestre vs 2o semestre por alumno
+SQL_FILTER_SEMESTRES = """
+SELECT
+    a.nombre AS alumno,
+    COUNT(*) FILTER (WHERE EXTRACT(month FROM m.created_at) BETWEEN 1 AND 6)   AS primer_semestre,
+    COUNT(*) FILTER (WHERE EXTRACT(month FROM m.created_at) BETWEEN 7 AND 12)  AS segundo_semestre,
+    COUNT(*)                                                                     AS total
+FROM matriculas m
+JOIN alumnos a ON m.alumno_id = a.id
+GROUP BY a.nombre
+ORDER BY total DESC, a.nombre;
+"""
